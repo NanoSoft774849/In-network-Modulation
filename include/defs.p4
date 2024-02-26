@@ -4,7 +4,7 @@
 // table size for MODulations types 
 #define MOD_TABLE_SIZE 32
 // Number of bits per IQ symbol
-#define IQ_BITS_PER_SYMBOL  8
+#define IQ_BITS_PER_SYMBOL  16
 //the number of bits in the b's in the net_mod_payload_hdr_t 
 #define PAYLOAD_BITS_PER_B  16
 // The number of IQs in the main header struct 
@@ -28,6 +28,18 @@ typedef bit<8> ttc_t;
 const bit<32> BITS_PER_PAYLOAD_HDR = PAYLOAD_HDR_B_COUNT * PAYLOAD_BITS_PER_B;
 //* hdr.mod.mhl
 const  bit<32> hs_IQ_count = BITS_PER_PAYLOAD_HDR;
+
+#define PB_BPSK_BITS_PER_B 16
+#define PB_QPSK_BITS_PER_B 16
+#define PB_QAM16_BITS_PER_B 16
+#define PB_QAM64_BITS_PER_B 6
+#define PB_QAM256_BITS_PER_B 16
+
+typedef bit<PB_BPSK_BITS_PER_B> bpsk_t;
+typedef bit<PB_QPSK_BITS_PER_B> qpsk_t;
+typedef bit<PB_QAM16_BITS_PER_B> qam16_t;
+typedef bit<PB_QAM64_BITS_PER_B> qam64_t;
+typedef bit<PB_QAM256_BITS_PER_B> qam256_t;
 
 typedef bit<48> mac_addr_t;
 //typedef bit<32> int32;

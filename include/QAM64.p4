@@ -2,22 +2,20 @@
 #define __QAM64__P4
 
 #include"snaps.p4"
-// Let us assume we have 16-bit per payload b
-// b0 -> you will take 6 bits , 6 , 4 ( 6, 6, 4) - ( 2, 6, 6, 2), ( 4, 6, 6) - ( 2, 6, 6, 2 ), ( 4, 6, 6)
-
-// You need to change this..
+//
+//
 control QAM64Mapper(inout ns_headers hdr, inout meta_data meta)
 {
     CreateRegisterMap(6)
-    // for ( 6, 6, 4 )
-    // action act664()
-    // {
-
-    // }
+    NET_MOD_PB_QAM64_CREATE_ACTION(0)
+    NET_MOD_PB_QAM64_CREATE_ACTION(1)
+    NET_MOD_PB_QAM64_CREATE_ACTION(2)
+    NET_MOD_PB_QAM64_CREATE_ACTION(3)
+//
 #define GEN_ACTION(i)\
-        action net6##i(){\
-        hdr.tmp_iq.s##i = act6.execute((bit<32>)hdr.circ.current_payload_b[5:0]);\
-        hdr.circ.current_payload_b =  hdr.circ.current_payload_b >> 6;}\
+        action net##i(){\
+        hdr.tmp_iq.s##i =  act6.execute((bit<32>)meta.current_payload_b);\
+}\
 //
 #define CREATE_ACTION_BANK()\
         GEN_ACTION(0)       \
@@ -30,8 +28,8 @@ control QAM64Mapper(inout ns_headers hdr, inout meta_data meta)
         GEN_ACTION(7)       \
 // //
 
-#define ACTION_LIST_ITEM(i) net6##i
-#define ACTION_ENTRY_ITEM(i) (i):net6##i
+#define ACTION_LIST_ITEM(i) net##i
+#define ACTION_ENTRY_ITEM(i) (i):net##i
 //
 #define ACTION_LIST_BANK()\
         ACTION_LIST_ITEM(0);\
@@ -56,13 +54,37 @@ control QAM64Mapper(inout ns_headers hdr, inout meta_data meta)
 
     CREATE_ACTION_BANK()
     
+    table QAM64_payload_sel_tbl
+    {
+        key = {
+            hdr.circ.payload_hdr_index : ternary;
+            hdr.circ.payload_b_index: ternary;
+        }
+        actions=
+        {
+            NET_MOD_PB_QAM64_ACTIONS_LIST(0)
+            NET_MOD_PB_QAM64_ACTIONS_LIST(1)
+            NET_MOD_PB_QAM64_ACTIONS_LIST(2)
+            NET_MOD_PB_QAM64_ACTIONS_LIST(3)
+            NoAction;
+        }
+        size = 128;
+        const entries = 
+        {
+            NET_MOD_PB_QAM64_ENTRY_LIST(0)
+            NET_MOD_PB_QAM64_ENTRY_LIST(1)
+            NET_MOD_PB_QAM64_ENTRY_LIST(2)
+            NET_MOD_PB_QAM64_ENTRY_LIST(3)
+        }
+        default_action = NoAction();
+    }
 
 
 
     table QAM64_table 
     {
         key = {
-            hdr.circ.iq_s_index : exact;
+            hdr.circ.iq_s_index : ternary;
         }
         actions = 
         {
@@ -76,12 +98,27 @@ control QAM64Mapper(inout ns_headers hdr, inout meta_data meta)
     }
 
     apply{
+        if(hdr.circ.index == 0)
+        {
+            hdr.circ.ttc = 192;
+        }
+        if( hdr.circ.payload_b_shift_cntr >= 6 || hdr.circ.payload_b_shift_cntr == 0)
+        {
+           
+           hdr.circ.payload_b_shift_cntr = 0;
+           QAM64_payload_sel_tbl.apply();
+           hdr.circ.payload_b_index = hdr.circ.payload_b_index |+| 1;
+        }
+        if (  hdr.circ.payload_b_index  == PAYLOAD_HDR_B_COUNT)
+        {
+            hdr.circ.payload_hdr_index = hdr.circ.payload_hdr_index |+| 1;
+            hdr.circ.payload_b_index = 0;
+        }
         QAM64_table.apply();
+        
     }
 
 }
 
 #endif
-
-
-
+//

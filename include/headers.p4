@@ -76,6 +76,27 @@ header net_mod_hdr_t
     bit<32> seq;
     bit<8> worker_id;
 }
+// QAM64 header
+header net_mod_payload_hdr_qam64_t
+{
+    qam64_t b0;
+    qam64_t b1;
+    qam64_t b2;
+    qam64_t b3;
+    qam64_t b4;
+    qam64_t b5;
+    qam64_t b6;
+    qam64_t b7;
+}
+// QAM headers -- 192 bit
+struct net_mod_payload_str_qam64_t
+{
+    net_mod_payload_hdr_qam64_t payload0;
+    net_mod_payload_hdr_qam64_t payload1;
+    net_mod_payload_hdr_qam64_t payload2;
+    net_mod_payload_hdr_qam64_t payload3;
+
+}
 // Input payload header
 header net_mod_payload_hdr_t
 {
@@ -130,13 +151,14 @@ struct ns_headers
     udp_h       udp;
     net_mod_hdr_t mod; // modulation header...
     net_mod_payload_hdr_t payload0;
-    net_mod_payload_hdr_t payload1;
-    net_mod_payload_hdr_t payload2;
-    net_mod_payload_hdr_t payload3;
-    net_mod_payload_hdr_t payload4;
-    net_mod_payload_hdr_t payload5;
-    net_mod_payload_hdr_t payload6;
-    net_mod_payload_hdr_t payload7;
+    net_mod_payload_str_qam64_t qam64;
+    // net_mod_payload_hdr_t payload1;
+    // net_mod_payload_hdr_t payload2;
+    // net_mod_payload_hdr_t payload3;
+    // net_mod_payload_hdr_t payload4;
+    // net_mod_payload_hdr_t payload5;
+    // net_mod_payload_hdr_t payload6;
+    // net_mod_payload_hdr_t payload7;
     net_mod_circ_hdr_t circ;
     net_mod_iq_hdr_t IQ0;
     net_mod_iq_hdr_t IQ1;
@@ -164,6 +186,7 @@ struct meta_data
     bit<1>        ipv4_csum_err;
     bit<8> rst;
     bit<32> index;
+    qam64_t current_payload_b;
     //bit_slice_t bit_slice_value;
     //iq_t iq_value;
     //bool is_qam;

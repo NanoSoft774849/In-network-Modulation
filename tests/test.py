@@ -54,7 +54,17 @@ class ModBitStream(Packet):
         for i, b in zip(range(0,8), _bytes):
             self.setfieldval(f"b{i}", b)
         return self
+
+
+class ModBitStreamQAM64(Packet):
+    name="bit_streams_for_modulation_qam64"
+    fields_desc = [ XBitField(name=f"b{i}", default=0,size=8) for i in range(0,24)]
+    def SetBitStream(self, _bytes):
+        for i, b in zip(range(0,24), _bytes):
+            self.setfieldval(f"b{i}", b)
+        return self
     
+
 class nr_PacketType(enum.Enum):
     PUSH = 0x10,
     READ0 = 0x40,
@@ -271,31 +281,29 @@ def mod_main():
     ipv4 = IP(src="192.168.1.2", dst=ip_dst)
     udp = UDP(sport = udp_src_port, dport = udp_dst_port)
 
-   
-
-    # 8 bytes = 4 int = 2 * 32 = 64 / 8 = 8 
-    #_bytes = b'\x00\x01\x02\x03\x04\x05\x06\x07'//0xFF_FF_FF_FF
-    N = 8
-    B = 8 # banks
-    #bits:bytearray = [random.randint(0, 255) for _ in range(0,N)]
-    #0x1020, 0x3040, 0x1011,0x1213, 0x1122,0x3344, 0x5566,0x7788 
-    bits = [0x1234, 0x5678, 0xBADC,0xFE10, 0x9988, 0x7766, 0xaabb, 0xccdd, 0x1020, 0x3040, 0x1011,0x1213, 0x1122,0x3344, 0x5566,0x7788 ]
-    N = len(bits)
-    packets_count = int(N/B)
-    for i in range(0,packets_count):
-
-
-        qpsk = modulation().SetBitsPerSymbols(bits_per_symbol).SetModeType(0x00).setSeq(i)
-
-        # _bytes = [0x00, 0xA1, 0xB2, 0xC3, 0xD4, 0xE5, 0xF6, 0x87]
-        _bytes = bits[B*i : B*(i+1)]
-        print(f" packet: {i}")
-        print(_bytes)
-        bit_stream = ModBitStream().SetBitStream(_bytes)
-        p = ( ether/ipv4/udp/qpsk/bit_stream)
-
+    if( bits_per_symbol == 6):
+        bits = [0x12,0x34, 0x56,0x78, 0xBA,0xDC,0xFE,0x10, 0x99,0x88, 0x77,0x66, 0xaa,0xbb, 0xcc,0xdd, 0x10,0x20, 0x30,0x40, 0x10,0x11, 0x12,0x13]
+        qam64 = modulation().SetBitsPerSymbols(bits_per_symbol).SetModeType(0x00).setSeq(0)
+        print(bits)
+        bit_stream = ModBitStreamQAM64().SetBitStream(bits)
+        p = ( ether/ipv4/udp/qam64/bit_stream)
         p.show()
-        sendp(p, iface=iface)
+        sendp(p, iface=iface) 
+
+    else:
+        B = 8 # banks
+        bits = [0x1234, 0x5678, 0xBADC,0xFE10, 0x9988, 0x7766, 0xaabb, 0xccdd, 0x1020, 0x3040, 0x1011,0x1213, 0x1122,0x3344, 0x5566,0x7788 ]
+        N = len(bits)
+        packets_count = int(N/B)
+        for i in range(0,packets_count):
+            qpsk = modulation().SetBitsPerSymbols(bits_per_symbol).SetModeType(0x00).setSeq(i)
+            _bytes = bits[B*i : B*(i+1)]
+            print(f" packet: {i}")
+            print(_bytes)
+            bit_stream = ModBitStream().SetBitStream(_bytes)
+            p = ( ether/ipv4/udp/qpsk/bit_stream)
+            p.show()
+            sendp(p, iface=iface)
 
 
 

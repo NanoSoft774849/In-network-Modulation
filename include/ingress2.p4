@@ -38,6 +38,8 @@ control Ingress(
             // // will be incremented when the payload_b_index reach PAYLOAD_HDR_B_COUNT
             // hdr.circ.payload_hdr_shift_cntr = hdr.circ.payload_hdr_shift_cntr |+| 
             hdr.circ.iq_s_index = hdr.circ.iq_s_index |+| 1;
+            // for the purpose of QAM64 .. setting ttc to 192..
+            hdr.circ.index = hdr.circ.index |+| 1;
 
         }
         action increment_iq_hdr_index()
@@ -157,7 +159,8 @@ control Ingress(
             hdr.circ.payload_b_index = 0;
             hdr.circ.payload_b_shift_cntr = 0;
             hdr.circ.bps = (ttc_t) hdr.mod.bps;
-            hdr.circ.current_payload_b = hdr.payload0.b0;
+            // we don't need to initialize this here since we done this down..
+            //hdr.circ.current_payload_b = hdr.payload0.b0;
             // hdr.circ.log2M = hdr.mod.bps; // bits per symbol/
             hdr.mod.ec = 1w1;
             recirculate();
@@ -233,6 +236,7 @@ control Ingress(
         bool done  = false;
 
        // when you have a single table you can't access multiple register Action Tables...
+       bit<8> modulus = 0;
        
        apply{
             if( hdr.circ.iq_hdr_index == IQ_HDRS_COUNT-1)
@@ -246,17 +250,23 @@ control Ingress(
               hdr.tmp_iq.setValid();
               hdr.circ.iq_hdr_end = 0;
               init_tbl.apply();
-                if( hdr.circ.payload_b_shift_cntr == PAYLOAD_BITS_PER_B)
+              // Due to QAM64, there will be 2 extra bits instead of 16 there wil be 18.. therefore should >=
+              if( hdr.mod.bps != 6)
+              {
+                // in QAM64 , this procedure has been moved to the QAM64 .. itself..
+                if( hdr.circ.payload_b_shift_cntr >= PAYLOAD_BITS_PER_B || hdr.circ.payload_b_shift_cntr == 0)
                 {
-                    hdr.circ.payload_b_index = hdr.circ.payload_b_index |+| 1;
+
                     hdr.circ.payload_b_shift_cntr = 0;
                     PayloadSelector.apply(hdr);
+                    hdr.circ.payload_b_index = hdr.circ.payload_b_index |+| 1;
                 }
-                if (  hdr.circ.payload_b_index  == PAYLOAD_HDR_B_COUNT-1)
+                if (  hdr.circ.payload_b_index  == PAYLOAD_HDR_B_COUNT)
                 {
                     hdr.circ.payload_hdr_index = hdr.circ.payload_hdr_index |+| 1;
                     hdr.circ.payload_b_index = 0;
                 }
+              }
     
             // Modulation....
                if(hdr.mod.bps == 1)
@@ -272,12 +282,13 @@ control Ingress(
                else if(hdr.mod.bps == 4)
                {
                    QAM16.apply(hdr, meta);
-                   enable_circ = true;
+                    enable_circ = true;
                }
                else if(hdr.mod.bps == 6)
                {
                    QAM64.apply(hdr, meta);
                    enable_circ = true;
+                //if( hdr.circ.ttc == 2)  enable_circ = false; // because 2 bits remains for 64.. 128 % 6 = 2;
                }
               else if(hdr.mod.bps == 8)
                {

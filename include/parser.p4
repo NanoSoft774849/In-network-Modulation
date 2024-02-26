@@ -5,6 +5,10 @@
 #define __parser__p4
 
 #include"headers.p4"
+
+#define NET_MOD_PARSER_STATE_NAME(t) parse_payload_##t
+
+
 // c current , n for next.
 #define PARSE_IQ(c, n)\
 state parse_IQ##c\
@@ -31,6 +35,15 @@ state parse_payload##c\
         }\
     }\
 //
+
+#define NET_MOD_QAM64_PARSER(c, n)\
+state NET_MOD_PARSER_STATE_NAME(qam64##c)\
+{\
+    pkt.extract(hdr.qam64.payload##c);\
+    transition NET_MOD_PARSER_STATE_NAME(qam64##n);\
+}\
+//
+
 
 parser IngressParser (
     packet_in pkt, 
@@ -105,42 +118,41 @@ parser IngressParser (
     }
     state parse_mod{
         pkt.extract(hdr.mod);
-        transition select(hdr.mod.ec)
+        transition select(hdr.mod.bps)
         {
-            (1w0):parse_payload0;
-            (1w1):parse_circ_payload0;
+            (6): NET_MOD_PARSER_STATE_NAME(qam640);
+            (_):parse_payload0;
         }
        
     }
     state parse_payload0
     {
         pkt.extract(hdr.payload0);
-        transition accept;
+
+        transition select (hdr.mod.ec)
+        {
+            (1w0): accept;
+            (1w1): parse_circ_payload0;
+        }
     }
     
 
-    // PARSE_PAYLOAD(0, 1)
-    // PARSE_PAYLOAD(1, 2)
-    // PARSE_PAYLOAD(2, 3)
-    // PARSE_PAYLOAD(3, 4)
-    // PARSE_PAYLOAD(4, 5)
-    // PARSE_PAYLOAD(5, 6)
-    // PARSE_PAYLOAD(6, 7)
-
-    // state parse_payload7
-    // {
-    //     pkt.extract(hdr.payload7);
-    //     transition select(hdr.mod.mhl, hdr.mod.ec)
-    //     {
-    //         (7, 1w0): accept;
-    //         (7, 1w1):parse_circ;
-    //         (_, _):reject;
-    //     }
-    // }
+    NET_MOD_QAM64_PARSER(0, 1)
+    NET_MOD_QAM64_PARSER(1, 2)
+    NET_MOD_QAM64_PARSER(2, 3)
+    state NET_MOD_PARSER_STATE_NAME(qam643)
+    {
+        pkt.extract(hdr.qam64.payload3);
+        transition select(hdr.mod.ec)
+        {
+            (1w0): accept;
+            (1w1): parse_circ_payload0;
+        }
+    }
 
     state parse_circ_payload0
     {
-        pkt.extract(hdr.payload0);
+       // pkt.extract(hdr.payload0);
         pkt.extract(hdr.circ);
         // depends on the value of hdr.circ.iq_s_index, hdr.iq_hdr_index 
         // when hdr.circ.iq_s_index = 7 then you should put temp into 
@@ -160,6 +172,9 @@ parser IngressParser (
             default : parse_IQ0;
         }
     }
+
+    
+
     // state parse_iq0 
     // {
     //     transition select( hdr.circ.iq_hdr_end, hdr.circ.iq_hdr_index)

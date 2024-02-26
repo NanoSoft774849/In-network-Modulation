@@ -1,5 +1,7 @@
 
 from functools import partial
+import Smaps
+import os
 
 P4 = bfrt.NanoMod.pipe;
 
@@ -72,6 +74,50 @@ def main():
     
     bfrt.complete_operations()
 
+
+def main2():
+    #clear_table(tab4)
+    path = os.getcwd()
+    print( path)
+    bpsk = Smaps.SMAPx("BPSK").GetSmap()
+    M = 2
+    for i in range(0, M):
+        addSymbol(M2, i, bpsk[i])
+
+    M = 4
+    qpsk = Smaps.SMAPx("QPSK").GetSmap()
+
+    for i in range(0, M):
+        addSymbol(M4, i, qpsk[i])
+    
+
+    M = 16
+    qam16 = Smaps.SMAPx("QAM16").GetSmap()
+
+    for i in range(0, M):
+        addSymbol(M16, i, qam16[i])
+
+    
+
+
+    M = 64
+    qam64 = Smaps.SMAPx("QAM64").GetSmap()
+
+    for i in range(0, M):
+        addSymbol(M64, i , qam64[i])
+
+    
+    M = 256
+    qam256 = Smaps.SMAPx("QAM256").GetSmap()
+
+    for i in range(0, M):
+        addSymbol(M256, i, qam256[i])
+
+    
+
+    
+    
+    bfrt.complete_operations()
 
 if __name__=="__main__":
     main()

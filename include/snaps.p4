@@ -124,7 +124,46 @@ action pbs##i##x() \
 //
 // IQ Selector , this will push the value to the hdr.IQx = hdr.tmp_iq;
 
+#define NET_MOD_PB_QAM64_SELECT(x, i) \
+action qam64##i##x() \
+{\
+  meta.current_payload_b =  hdr.qam64.payload##x.b##i;\
+}\
+//
+#define NET_MOD_PB_QAM64_CREATE_ACTION(b)\
+        NET_MOD_PB_QAM64_SELECT(b, 0) \
+        NET_MOD_PB_QAM64_SELECT(b, 1) \
+        NET_MOD_PB_QAM64_SELECT(b, 2) \
+        NET_MOD_PB_QAM64_SELECT(b, 3) \
+        NET_MOD_PB_QAM64_SELECT(b, 4) \
+        NET_MOD_PB_QAM64_SELECT(b, 5) \
+        NET_MOD_PB_QAM64_SELECT(b, 6) \
+        NET_MOD_PB_QAM64_SELECT(b, 7) \
+//
+#define NET_MOD_PB_QAM64_ACTION(b,i) qam64##i##b
+#define NET_MOD_PB_QAM64_ENTRY(b,i)  (b,i):qam64##i##b
+//
+#define NET_MOD_PB_QAM64_ACTIONS_LIST(b)\
+        NET_MOD_PB_QAM64_ACTION(b, 0);\
+        NET_MOD_PB_QAM64_ACTION(b, 1);\
+        NET_MOD_PB_QAM64_ACTION(b, 2);\
+        NET_MOD_PB_QAM64_ACTION(b, 3);\
+        NET_MOD_PB_QAM64_ACTION(b, 4);\
+        NET_MOD_PB_QAM64_ACTION(b, 5);\
+        NET_MOD_PB_QAM64_ACTION(b, 6);\
+        NET_MOD_PB_QAM64_ACTION(b, 7);\
+//
 
+#define NET_MOD_PB_QAM64_ENTRY_LIST(b)\
+        NET_MOD_PB_QAM64_ENTRY(b, 0);\
+        NET_MOD_PB_QAM64_ENTRY(b, 1);\
+        NET_MOD_PB_QAM64_ENTRY(b, 2);\
+        NET_MOD_PB_QAM64_ENTRY(b, 3);\
+        NET_MOD_PB_QAM64_ENTRY(b, 4);\
+        NET_MOD_PB_QAM64_ENTRY(b, 5);\
+        NET_MOD_PB_QAM64_ENTRY(b, 6);\
+        NET_MOD_PB_QAM64_ENTRY(b, 7);\
+//
 
 
 #endif
