@@ -4,6 +4,8 @@
 #include"snaps.p4"
 // Let us assume we have 16-bit per payload b
 // b0 -> you will take 6 bits , 6 , 4 ( 6, 6, 4) - ( 2, 6, 6, 2), ( 4, 6, 6) - ( 2, 6, 6, 2 ), ( 4, 6, 6)
+
+// You need to change this..
 control QAM64Mapper(inout ns_headers hdr, inout meta_data meta)
 {
     CreateRegisterMap(6)
